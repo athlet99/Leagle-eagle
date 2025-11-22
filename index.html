@@ -13,36 +13,37 @@
         <header id="headerStyle">
             <img id="headerImg" src="Images/legal-eagle-logo.png">
             <div class="headings">
-                <button class="button">О нас</button>
-                <button class="button">Услуги</button>
-                <button class="button">Команда</button>
-                <button class="button">Контакты</button>
+                <a href="#About_us"><button class="button">О нас</button></a>
+                <a href="#services"><button class="button">Услуги</button></a>
+                <a href="#Our_team"><button class="button">Команда</button></a>
+                <a href="#Prices"><button class="button">Цены</button></a>
+                <a href="#footerStyle"><button class="button">Контакты</button></a>
             </div>
         </header>
         
         <main id="mainStyle">
 <!-- ABOUT US=====ABOUT US=====ABOUT US=====ABOUT US=====ABOUT US -->
-                <div class="block1">
-                    <img class="block1_img" src="Images/img1.jpg" alt="img1">
-                    <div class="block1_text">
-                        <h1 class="block1_heading">О нас</h1>
-                        <p> Legal-eagle — современная и динамично развивающаяся 
+            <section class="block1" id="About_us">
+                <img class="block1_img" src="Images/img1.jpg" alt="img1">
+                <div class="block1_text">
+                    <h1 class="block1_heading">О нас</h1>
+                    <p> Legal-eagle — современная и динамично развивающаяся 
                             адвокатская фирма, предоставляющая профессиональные 
                             юридические услуги в Ташкенте.</p>
-                        <p> Мы специализируемся на различных отраслях права и 
+                    <p> Мы специализируемся на различных отраслях права и 
                             предлагаем индивидуальный подход к каждому клиенту.
                             Наша команда опытных юристов оказывает полное 
                             сопровождение как по коммерческим проектам, 
                             так и по сложным правовым вопросам, 
                             включая защиту интересов в суде и решение задач 
                             на национальном и международном уровнях.</p>
-                        <p> В Legal-eagle мы стремимся находить уникальные 
+                    <p> В Legal-eagle мы стремимся находить уникальные 
                             решения для каждого клиента, обеспечивая надёжную 
                             защиту и поддержку в любых правовых ситуациях.
                             Обратитесь к нам за консультацией и получите 
                             квалифицированную помощь от профессионалов.</p>
-                    </div>
                 </div>
+            </section>
 <!-- ABOUT US=====ABOUT US=====ABOUT US=====ABOUT US=====ABOUT US -->
 
 <!-- SERVICES=====SERVICES=====SERVICES=====SERVICES=====SERVICES -->
@@ -135,7 +136,7 @@
 <!-- SERVICES=====SERVICES=====SERVICES=====SERVICES=====SERVICES -->
 
 <!-- TEAM=====TEAM=====TEAM=====TEAM=====TEAM -->
-            <section class="team">
+            <section class="team" id="Our_team">
                 <h1 class="team-heading">Наша команда</h1>
                 <div class="our-team">
                     <div class="bio-cards">
@@ -184,7 +185,7 @@
 
 <!-- PRICES=====PRICES=====PRICES=====PRICES=====PRICES -->
 
-            <section class="prices">
+            <section class="prices" id="Prices">
                 <h1 class="prices-heading">Прайс-лист</h1>
                 <div class="prices-table">
                     <div class="price-card">
@@ -393,8 +394,49 @@
 
 <!-- PRICES=====PRICES=====PRICES=====PRICES=====PRICES -->
         </main>
+
         <footer id="footerStyle">
             
         </footer>
+
+        <script>
+            function smoothScroll(target, duration = 800) {
+            const start = window.pageYOffset;
+            const targetElement = document.querySelector(target);
+            if (!targetElement) return;
+
+            const offset = 200; // ← если нужно: расстояние от верха (header + запас)
+            const end = targetElement.getBoundingClientRect().top + start - offset;
+            const distance = end - start;
+
+            const startTime = performance.now();
+
+            // easing — плавное замедление (ease-out)
+            const easeOut = t => 1 - Math.pow(1 - t, 3);
+
+            function animate(current) {
+                const elapsed = current - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                const eased = easeOut(progress);
+
+                window.scrollTo(0, start + distance * eased);
+
+                if (progress < 1) requestAnimationFrame(animate);
+            }
+
+            requestAnimationFrame(animate);
+            }
+
+            // навесить на все якорные ссылки
+            document.querySelectorAll('a[href^="#"]').forEach(link => {
+            link.addEventListener('click', e => {
+                const href = link.getAttribute('href');
+                if (href.length > 1) {
+                e.preventDefault();
+                smoothScroll(href, 900);  // ← СКОРОСТЬ (900ms)
+                }
+            });
+            });
+        </script>
     </body>
 </html>
