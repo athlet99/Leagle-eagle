@@ -50,7 +50,22 @@
 
 <!-- STATISTIC=====STATISTIC=====STATISTIC=====STATISTIC=====STATISTIC -->
             <section class="statistic">
-                                    
+                <div class="punct">
+                    <h1 class="numb" data-target="3">+0</h1>
+                    <p class="describe">Года успешной работы</p>
+                </div>
+                <div class="punct">
+                    <h1 class="numb" data-target="300">+0</h1>
+                    <p class="describe">Юридических консультаций</p>
+                </div>
+                <div class="punct">
+                    <h1 class="numb" data-target="100">+0</h1>
+                    <p class="describe">Закрытых<br> кейсов</p>
+                </div>
+                <div class="punct">
+                    <h1 class="numb" data-target="40">+0</h1>
+                    <p class="describe">Постоянных<br> клиентов</p>
+                </div>         
             </section>
 <!-- STATISTIC=====STATISTIC=====STATISTIC=====STATISTIC=====STATISTIC -->
 
@@ -448,6 +463,46 @@
                 }
             });
             });
+
+            document.addEventListener('DOMContentLoaded', () => {
+                if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                    document.querySelectorAll('.numb').forEach(el => el.textContent = '+' + el.dataset.target);
+                    return;
+            }
+
+            const nums = document.querySelectorAll('.numb');
+            const io = new IntersectionObserver((entries, obs) => {
+                entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const el = entry.target;
+                    obs.unobserve(el);
+                    const target = Number(el.dataset.target) || 0;
+                    const duration = 900 + Math.min(500, target * 3);
+                    const start = performance.now();
+
+                        function frame(now) {
+                            const t = Math.min((now - start) / duration, 1);
+
+                            // 🔥 LINEAR (t вместо eased)
+                            const current = Math.floor(t * target);
+
+                            el.textContent = (target >= 0 ? '+' : '-') + current.toLocaleString('ru-RU');
+
+                            if (t < 1) {
+                                requestAnimationFrame(frame);
+                            } else {
+                                el.textContent = (target >= 0 ? '+' : '-') + target.toLocaleString('ru-RU');
+                            }
+                        }
+
+                    requestAnimationFrame(frame);
+                }
+                });
+            }, { threshold: 0.3 });
+
+            nums.forEach(n => io.observe(n));
+            });
+
         </script>
     </body>
 </html>
