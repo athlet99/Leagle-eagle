@@ -100,7 +100,7 @@
                                     </ul>
                                 </div>
                                 <div class="slide-img">
-                                    <img src="Images/img2.jpg" alt="img2" loading="lazy">
+                                    <img src="Images/service1.png.jpe" alt="img2" loading="lazy">
                                 </div>
                             </article>
 
@@ -119,7 +119,7 @@
                                     </ul>                    
                                 </div>
                                 <div class="slide-img">
-                                    <img src="Images/img2.jpg" alt="img2" loading="lazy">
+                                    <img src="Images/service2.png.webp" alt="img2" loading="lazy">
                                 </div>
                             </article>
 
@@ -142,7 +142,7 @@
                                     </ul>
                                 </div>
                                 <div class="slide-img">
-                                    <img src="Images/img2.jpg" alt="img2" loading="lazy">
+                                    <img src="Images/service3.png" alt="img2" loading="lazy">
                                 </div>
                             </article>
                         </div>
@@ -501,6 +501,174 @@
             }, { threshold: 0.3 });
 
             nums.forEach(n => io.observe(n));
+            });
+
+            /*
+            Carousel logic:
+            - slidesEl: контейнер .slides (мы будем трансформировать его)
+            - index: текущий активный слайд
+            - goTo(i): безопасно переходит на слайд i (с учётом цикличности)
+            - prev/next/dots listeners, keyboard, touch support
+            - isAnimating защищает от многократных кликов во время transition
+            */
+
+            document.addEventListener('DOMContentLoaded', () => {
+            // Если пользователь предпочитает reduced motion — не анимируем (пауза)
+            const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+            const slidesEl = document.querySelector('.slides');
+            if (!slidesEl) return; // если нет слайдов — выходим
+
+            const slides = Array.from(document.querySelectorAll('.slide'));
+            const prevBtn = document.querySelector('.nav.prev');
+            const nextBtn = document.querySelector('.nav.next');
+            const dots = Array.from(document.querySelectorAll('.dot'));
+            const wrap = document.querySelector('.slides-wrap');
+
+            let index = 0;
+            const total = slides.length;
+            let isAnimating = false;
+
+            // helper: устанавливает transform на .slides
+            function updateTransform(i, withTransition = true) {
+                // если нужно отключить animation (reduced) — делаем мгновенно
+                // if (!withTransition || reduced) {
+                // // slidesEl.style.transition = 'none';
+                // } else {
+                slidesEl.style.transition = ''; // применит CSS transition из .slides
+                // }
+                slidesEl.style.transform = `translateX(-${i * 100}%)`;
+                // если transition отключен временно — вернуть его в следующий тик
+                if (!withTransition && !reduced) {
+                // небольшая пауза, затем вернуть transition
+                requestAnimationFrame(() => {
+                    // force reflow to allow transition next time
+                    void slidesEl.offsetWidth;
+                    slidesEl.style.transition = '';
+                });
+                }
+            }
+
+            // helper: обновляет состояние точек и aria-hidden
+            function updateUI(i) {
+                dots.forEach((d, idx) => {
+                const selected = idx === i;
+                d.setAttribute('aria-selected', selected ? 'true' : 'false');
+                d.tabIndex = selected ? 0 : -1;
+                });
+
+                slides.forEach((s, idx) => {
+                s.setAttribute('aria-hidden', idx === i ? 'false' : 'true');
+                });
+            }
+
+            // Нормализует индекс (цикличность)
+            function normalize(i) {
+                return (i % total + total) % total;
+            }
+
+            // Переход на слайд i
+            function goTo(i) {
+                if (isAnimating || total <= 1) return;
+                isAnimating = true;
+
+                index = normalize(i);
+                // включаем transition (css задаёт duration)
+                updateTransform(index, true);
+                updateUI(index);
+
+                // ждём окончания CSS transition
+                const onEnd = () => {
+                isAnimating = false;
+                slidesEl.removeEventListener('transitionend', onEnd);
+                };
+                // если reduced — пропускаем ожидание анимации
+                if (reduced) {
+                isAnimating = false;
+                } else {
+                slidesEl.addEventListener('transitionend', onEnd);
+                // safety timeout на случай, если transitionend не сработал
+                setTimeout(() => { if (isAnimating) { isAnimating = false; } }, 1000 + parseInt(getComputedStyle(document.documentElement).getPropertyValue('--transition-duration')) || 700);
+                }
+            }
+
+            // Prev / Next
+            if (prevBtn) prevBtn.addEventListener('click', () => goTo(index - 1));
+            if (nextBtn) nextBtn.addEventListener('click', () => goTo(index + 1));
+
+            // Dots click
+            dots.forEach(d => {
+                d.addEventListener('click', () => {
+                const i = Number(d.dataset.slide);
+                goTo(i);
+                });
+            });
+
+            // Keyboard navigation: Left / Right
+            document.addEventListener('keydown', (e) => {
+                // не обрабатываем если фокус внутри input/textarea
+                const tag = document.activeElement && document.activeElement.tagName.toLowerCase();
+                if (tag === 'input' || tag === 'textarea') return;
+
+                if (e.key === 'ArrowLeft') goTo(index - 1);
+                if (e.key === 'ArrowRight') goTo(index + 1);
+            });
+
+            // Touch (swipe) support — простая реализация
+            (function addTouchSupport() {
+                if (!wrap) return;
+                let startX = 0;
+                let deltaX = 0;
+                let isTouching = false;
+                const threshold = 50; // минимальный свайп в px
+
+                // wrap.addEventListener('touchstart', (e) => {
+                // if (isAnimating) return;
+                // isTouching = true;
+                // startX = e.touches[0].clientX;
+                // deltaX = 0;
+                // // отключаем transition при перетаскивании для лучшего UX
+                // // slidesEl.style.transition = 'none';
+                // }, {passive: true});
+
+                wrap.addEventListener('touchmove', (e) => {
+                if (!isTouching) return;
+                deltaX = e.touches[0].clientX - startX;
+                // временно смещаем слайды пропорционально свайпу
+                const percent = (deltaX / wrap.clientWidth) * 100;
+                slidesEl.style.transform = `translateX(-${index * 100 - percent}%)`;
+                }, {passive: true});
+
+                wrap.addEventListener('touchend', () => {
+                if (!isTouching) return;
+                isTouching = false;
+                // вернуть transition
+                slidesEl.style.transition = '';
+                if (Math.abs(deltaX) > threshold) {
+                    if (deltaX > 0) goTo(index - 1);
+                    else goTo(index + 1);
+                } else {
+                    // плохо свайпнули — вернуться на тот же слайд
+                    updateTransform(index, true);
+                }
+                }, {passive: true});
+            })();
+
+            // Accessibility: стартовое состояние
+            updateTransform(index, !reduced); // если reduced: no transition
+            updateUI(index);
+
+            // Optional: autoplay (закомментировано). Если нужен — раскомментируй.
+            /*
+            let autoplayInterval = 5000; // ms
+            let autoplayTimer = setInterval(() => {
+                goTo(index + 1);
+            }, autoplayInterval);
+
+            // остановить autoplay при наведении мыши
+            slidesEl.addEventListener('mouseenter', () => clearInterval(autoplayTimer));
+            slidesEl.addEventListener('mouseleave', () => { autoplayTimer = setInterval(() => goTo(index+1), autoplayInterval); });
+            */
             });
 
         </script>
